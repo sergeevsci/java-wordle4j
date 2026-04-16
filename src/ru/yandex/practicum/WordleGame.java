@@ -20,4 +20,18 @@ public class WordleGame {
 
     private WordleDictionary dictionary;
 
+    LogWriter logWriter;
+
+    public WordleGame(String answer, int steps, WordleDictionary dictionary, LogWriter logWriter) {
+        this.answer = answer;
+        this.steps = steps;
+        this.dictionary = dictionary;
+        this.logWriter = logWriter;
+    }
+
+    int start() {
+        System.out.println("Игра началась");
+        return 0;
+    }
+
 }

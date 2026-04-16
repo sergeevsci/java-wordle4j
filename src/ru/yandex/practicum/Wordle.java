@@ -11,7 +11,28 @@ package ru.yandex.practicum;
  */
 public class Wordle {
 
+    private static final String filenameWordsRu = "words_ru.txt";
+    private static final String filenameLog = "log.txt";
+
     public static void main(String[] args) {
+
+        LogWriter logWriter = new LogWriter(filenameLog);
+        try {
+            WordleDictionaryLoader wdLoader = new WordleDictionaryLoader(filenameWordsRu, logWriter);
+            WordleDictionary wordsDictionary = new WordleDictionary(wdLoader.readWordsFromFile(), logWriter);
+            wordsDictionary = wordsDictionary.normalizeWordleDictionary(wordsDictionary.getWords());
+            //System.out.println(wordsDictionary.getWords()); // окей, слова, очищенные по правилам получили
+            WordleGame wordleGame = new WordleGame("сгенерированное слово", 6, wordsDictionary, logWriter);
+            wordleGame.start();
+        }
+        /*
+        catch (GameException e) { // нужен в блоке try метод который будет throws GameException
+            System.out.println("Ошибка программы: " + e.getMessage()); // не логгируем игровые ошибки.
+        }
+        */
+        catch (Exception e) {
+            logWriter.log("Неожиданная ошибка: ", e); // все остальные в файл
+        }
 
     }
 
