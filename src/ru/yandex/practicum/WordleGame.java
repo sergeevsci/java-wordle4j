@@ -1,5 +1,9 @@
 package ru.yandex.practicum;
 
+import java.util.Random;
+import java.util.List;
+import java.util.Arrays;
+
 /*
 в этом классе хранится словарь и состояние игры
     текущий шаг
@@ -22,16 +26,49 @@ public class WordleGame {
 
     LogWriter logWriter;
 
-    public WordleGame(String answer, int steps, WordleDictionary dictionary, LogWriter logWriter) {
-        this.answer = answer;
+    private GameStatus gameStatus;
+
+    public WordleGame(int steps, WordleDictionary dictionary, LogWriter logWriter) throws GameException {
         this.steps = steps;
         this.dictionary = dictionary;
         this.logWriter = logWriter;
     }
 
-    int start() {
-        System.out.println("Игра началась");
-        return 0;
+    GameStatus startGame() {
+        try {
+            this.answer = generateAnswerWord(); // Выберем случайное слово из нашего списка
+        } catch (EmptyDictionaryWordleException e) {
+            logWriter.log(e.getMessage(), e);
+            return GameStatus.EMPTY_DICTIONARY;
+        }
+        this.gameStatus = GameStatus.READY;
+        return this.gameStatus;
     }
+
+    GameStatus takeStepGame(String step) {
+
+        return GameStatus.READY; // или (SUCCESS или LOSS).
+    }
+
+    String getAnswer() {
+        return answer;
+    }
+
+    int getSteps() {
+        return steps;
+    }
+
+    GameStatus getGameStatus() {
+        return gameStatus;
+    }
+
+    String generateAnswerWord() throws EmptyDictionaryWordleException {
+        Random random = new Random();
+        if (dictionary.getWords().isEmpty()) {
+            throw new EmptyDictionaryWordleException("Словарь для игры в Wordle оказался пуст."); // null-значение по умолчанию
+        }
+        return dictionary.getWords().get(random.nextInt(dictionary.getWords().size()));
+    }
+
 
 }
