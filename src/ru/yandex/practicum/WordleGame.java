@@ -91,6 +91,7 @@ public class WordleGame {
             } catch (EmptyDictionaryWordleException e) {
                 logWriter.log(e.getMessage(), e);
                 gameStatus = GameStatus.EMPTY_DICTIONARY;
+            }
             return hint;
         }
 
