@@ -1,6 +1,7 @@
 package ru.yandex.practicum;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 /*
@@ -21,23 +22,16 @@ public class WordleGame {
 
     private int steps;
 
-    public WordleDictionary getDictionary() {
-        return dictionary;
-    }
-
     private WordleDictionary dictionary;
 
     LogWriter logWriter;
 
-    public void setGameStatus(GameStatus gameStatus) {
-        this.gameStatus = gameStatus;
-    }
-
     private GameStatus gameStatus;
+
+    char[] charArrayAnswer;
 
     private ArrayList<String> usedWords = new ArrayList<>(6);
     private ArrayList<String> usedTranscriptsUsedWords = new ArrayList<>(6);
-    private ArrayList<String> usedHints = new ArrayList<>(6);
 
     public WordleGame(int steps, WordleDictionary dictionary, GameStatus gameStatus, LogWriter logWriter) throws GameException {
         this.steps = steps;
@@ -50,18 +44,22 @@ public class WordleGame {
             logWriter.log(e.getMessage(), e);
             gameStatus = GameStatus.EMPTY_DICTIONARY;
         }
+        this.charArrayAnswer = answer.toCharArray();
     }
 
-    GameStatus startGame() {
-        gameStatus = GameStatus.READY;
-        return gameStatus;
+    public void setGameStatus(GameStatus gameStatus) {
+        this.gameStatus = gameStatus;
+    }
+
+    public WordleDictionary getDictionary() {
+        return dictionary;
     }
 
     String takeStepGame(String input) { // Делаем шаг
         boolean isUseHint = false;
         if (input.trim().isEmpty() || input.isEmpty()) {
             isUseHint = true;
-            input = giveHint(); // активируем подсказку при пустом вводе
+            input = giveHint(charArrayAnswer); // активируем подсказку при пустом вводе
         }
 
         StringBuilder stringBuilder = new StringBuilder();
@@ -73,7 +71,6 @@ public class WordleGame {
         input = input.replace('ё', 'е');
 
         char[] charArrayInput = input.toCharArray();
-        char[] charArrayAnswer = answer.toCharArray();
 
         usedWords.add(input);
         String transcriptsWord = checkingForPresenceOfLetter(charArrayInput, charArrayAnswer, stringBuilder);
@@ -83,7 +80,7 @@ public class WordleGame {
         return transcriptsWord;
     }
 
-    String giveHint() { // Даем подсказку при пустом вводе. !! Игру можно пройти одними подсказками
+    String giveHint(char[] charArrayAnswer) { // Даем подсказку при пустом вводе. !! Игру можно пройти одними подсказками
         if (usedWords.isEmpty()) { // Пользователь сразу просит подсказку. Можно любое слово впихнуть.
             String hint = "";
             try {
@@ -95,12 +92,66 @@ public class WordleGame {
             return hint;
         }
 
-        if (usedHints.isEmpty()) { // Пользователь берет подсказку первый раз. Сначала анализируем что он вводил раньше
+        int[] weights = calculateAnswerWordWeights();
 
+        // Находим букву с наименьшим весом
+        int minWeight = Integer.MAX_VALUE;
+        int hintPosition = -1;
+
+        for (int i = 0; i < weights.length; i++) {
+            if (weights[i] < minWeight) {
+                minWeight = weights[i];
+                hintPosition = i;
+            }
         }
 
-        return "чувак";
+        char hintLetter = ' ';
+        if (hintPosition != -1) {
+            hintLetter = answer.charAt(hintPosition);
+            /*
+            System.out.println("Подсказка: буква '" + hintLetter +
+                    "' на позиции " + (hintPosition + 1) +
+                    " (вес: " + minWeight + ")");
 
+             */
+        }
+
+        return generateHintWord(hintLetter, hintPosition);
+    }
+
+    String generateHintWord(char hintLetter, int hintPosition) {
+        // Далее можно использовать hintLetter и hintPosition
+        // для подбора слова, где эта буква стоит на нужной позиции
+        return "чувак";
+    }
+
+    public int[] calculateAnswerWordWeights() {
+        int[] answerLetterWeight = new int[5];
+        for (int i = 0; i < usedTranscriptsUsedWords.size(); i++) { // беру шифр каждого введенного ответа и смотрю че это за символ в том слове был. и нас этот символ вес плюсуется
+            String transcriptsWord = usedTranscriptsUsedWords.get(i);
+
+            for (int j = 0; j < transcriptsWord.length(); j++) {
+                char symbol = transcriptsWord.charAt(j);
+                int weight = 0;
+
+                switch (symbol) { // Определяем вес символа
+                    case '+':
+                        weight = 100;
+                        break;
+                    case '-':
+                        weight = 10;
+                        break;
+                    case '^':
+                        weight = 1;
+                        break;
+                    default:
+                        weight = 0; // игнорируем другие символы текущего шифра
+                }
+                // Добавляем вес к соответствующей позиции буквы ответа
+                answerLetterWeight[j] += weight;
+            }
+        }
+        return answerLetterWeight;
     }
 
     String checkingForPresenceOfLetter(char[] charArrayInput, char[] charArrayAnswer, StringBuilder stringBuilder) {
