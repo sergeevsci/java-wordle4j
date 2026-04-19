@@ -3,6 +3,9 @@ package ru.yandex.practicum;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Date;
 import java.text.SimpleDateFormat;
 
@@ -36,6 +39,15 @@ public class LogWriter {
         } catch (IOException ioe) {
             System.err.println("КРИТИЧЕСКАЯ ОШИБКА: не удалось записать в лог-файл: " + ioe.getMessage());
             System.err.println("Исходная ошибка: " + message);
+        }
+    }
+
+    public void clearLogFile() {
+        Path logPath = Paths.get("log.txt");
+        try {
+            Files.deleteIfExists(logPath);
+        } catch (Exception e) {
+            System.err.println("Ошибка при удалении файла: " + e.getMessage());
         }
     }
 

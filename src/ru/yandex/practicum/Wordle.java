@@ -1,6 +1,6 @@
 package ru.yandex.practicum;
 
-import java.util.Scanner;
+import java.util.*;
 
 /*
 в главном классе нам нужно:
@@ -8,8 +8,8 @@ import java.util.Scanner;
     + создать загрузчик словарей WordleDictionaryLoader
     + загрузить словарь WordleDictionary с помощью класса WordleDictionaryLoader
     + затем создать игру WordleGame и передать ей словарь
-    ! вызвать игровой метод в котором в цикле опрашивать пользователя и передавать информацию в игру
-    ! вывести состояние игры и конечный результат
+    + вызвать игровой метод в котором в цикле опрашивать пользователя и передавать информацию в игру
+    + вывести состояние игры и конечный результат
  */
 public class Wordle {
 
@@ -19,24 +19,26 @@ public class Wordle {
     public static void main(String[] args) {
 
         LogWriter logWriter = new LogWriter(filenameLog);
+        logWriter.clearLogFile(); // удалили файл если он был до запуска
         try {
             WordleDictionaryLoader wdLoader = new WordleDictionaryLoader(filenameWordsRu, logWriter);
             WordleDictionary wordsDictionary = new WordleDictionary(wdLoader.readWordsFromFile(), logWriter);
             wordsDictionary = wordsDictionary.normalizeWordleDictionary(wordsDictionary.getWords());
             //System.out.println(wordsDictionary.getWords()); // окей, слова, очищенные по правилам получили
-            WordleGame wordleGame = new WordleGame(6, wordsDictionary, logWriter);
+            WordleGame wordleGame = new WordleGame(3, wordsDictionary, GameStatus.READY, logWriter);
             System.out.println("Игра началась. Слово загадано. Отгадывайте.");
 
             Scanner scanner = new Scanner(System.in);
             while (wordleGame.getGameStatus() == GameStatus.READY) {
-                String input = scanner.nextLine();
-                // сразу провели обработку введенного. Обвести в try. и методу takeStepGame(String input);
+                userInput(scanner, logWriter, wordleGame);
             }
 
             if (wordleGame.getGameStatus() != GameStatus.READY) { // Конец игры
                 switch (wordleGame.getGameStatus()) {
                     case GameStatus.SUCCESS -> System.out.println("Да, правильный ответ: " + wordleGame.getAnswer());
-                    case GameStatus.LOSS -> System.out.println("Ответ угадать не получилось. Правильное слово: " + wordleGame.getAnswer());
+                    //case GameStatus.LOSS -> System.out.println("Ответ угадать не получилось. Правильное слово: " + wordleGame.getAnswer());
+                    case GameStatus.LOSS -> System.out.println("Ответ угадать не получилось. Правильное слово: " + wordleGame.getUsedWords()
+                    + wordleGame.getUsedTranscriptsUsedWords());
                 }
             }
         }
@@ -47,6 +49,40 @@ public class Wordle {
             logWriter.log("Неожиданная ошибка: ", e); // все остальные в файл
         }
 
+    }
+
+    static void userInput(Scanner scanner, LogWriter logWriter, WordleGame wordleGame) {
+        String input;
+        try { // сразу провели обработку введенного. Обвести в try. и методу takeStepGame(String input);
+            input = scanner.nextLine();
+            if ((input.length() != 5) && (!input.trim().isEmpty())) {
+                throw new WordIsNot5CharactersLong("Вы ввели слово состоящее не из 5 символов.");
+            }
+
+            if (input.equals(wordleGame.getAnswer())) {
+                wordleGame.setGameStatus(GameStatus.SUCCESS);
+                return;
+            }
+
+            if ((!wordleGame.getDictionary().getWords().contains(input.trim().toLowerCase())) && (!input.trim().isEmpty())) {
+                throw new EnteredWordIsNotInListAvailableWords("Введенного слова нет в списке слов доступных к вводу.");
+            }
+
+            String step = wordleGame.takeStepGame(input);
+            if (step.contains(" ")) {
+                String[] parts = step.split(" ", 2);
+                System.out.printf("%s%n%s%n", parts[0], parts[1]);
+            } else {
+                System.out.printf("%s%n", step);
+            }
+
+
+        } catch (NoSuchElementException | IllegalStateException e) {
+            System.out.println("Произошла ошибка. Попробуйте еще раз.");
+            logWriter.log(e.getMessage(), e);
+        } catch (WordIsNot5CharactersLong | EnteredWordIsNotInListAvailableWords e) {
+            System.out.println("Ошибка ввода." + e.getMessage());
+        }
     }
 
 }
