@@ -6,9 +6,14 @@ class GameState {
     private final Set<Character> excludedLetters = new HashSet<>();
     private final Map<Integer, Character> confirmedPositions = new HashMap<>();
     private final Set<Character> presentLetters = new HashSet<>();
+    private final LogWriter logWriter;
 
-    public void updateFromTranscript(String word, String transcript) {
-        for (int i = 0; i < 5; i++) {
+    public GameState(LogWriter logWriter) {
+        this.logWriter = logWriter;
+    }
+
+    public void updateFromTranscript(String word, String transcript, int lengthWord) { // метод принимает уже выверенные параметры
+        for (int i = 0; i < lengthWord; i++) {
             char symbol = transcript.charAt(i);
             char letter = word.charAt(i);
 

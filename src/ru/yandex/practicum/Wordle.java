@@ -16,6 +16,10 @@ public class Wordle {
     private static final String filenameWordsRu = "words_ru.txt";
     private static final String filenameLog = "log.txt";
 
+    private static final int countSteps = 6;
+    private static final int lengthWord = 5;
+
+
     public static void main(String[] args) {
 
         LogWriter logWriter = new LogWriter(filenameLog);
@@ -25,7 +29,7 @@ public class Wordle {
             WordleDictionary wordsDictionary = new WordleDictionary(wdLoader.readWordsFromFile(), logWriter);
             wordsDictionary = wordsDictionary.normalizeWordleDictionary(wordsDictionary.getWords());
             //System.out.println(wordsDictionary.getWords()); // окей, слова, очищенные по правилам получили
-            WordleGame wordleGame = new WordleGame(6, wordsDictionary, GameStatus.READY, logWriter);
+            WordleGame wordleGame = new WordleGame(countSteps, lengthWord, wordsDictionary, GameStatus.READY, logWriter);
             System.out.println("Игра началась. Слово загадано. Отгадывайте.");
 
             Scanner scanner = new Scanner(System.in);
@@ -55,10 +59,10 @@ public class Wordle {
 
     static void userInput(Scanner scanner, LogWriter logWriter, WordleGame wordleGame) {
         String input;
-        try { // сразу провели обработку введенного. Обвести в try. и методу takeStepGame(String input);
+        try { // сразу провели обработку введенного. Обвести в try. и методу takeStepGame(String input); +
             input = scanner.nextLine();
-            if ((input.length() != 5) && (!input.trim().isEmpty())) {
-                throw new WordIsNot5CharactersLong("Вы ввели слово состоящее не из 5 символов.");
+            if ((input.length() != lengthWord) && (!input.trim().isEmpty())) {
+                throw new WordIsNot5CharactersLong("Вы ввели слово состоящее не из "+ lengthWord +" символов.");
             }
 
             if (input.equals(wordleGame.getAnswer())) {

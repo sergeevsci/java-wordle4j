@@ -7,21 +7,24 @@ import java.util.Random;
 
 public class WordleGame {
     private String answer;
-    private int steps;
+    private int countSteps;
+    private int lengthWord;
     private WordleDictionary dictionary;
     private LogWriter logWriter;
     private GameStatus gameStatus;
     private boolean isUsedHint = false;
-    private final GameState gameState = new GameState();
+    private final GameState gameState;
     private char[] charArrayAnswer;
     private Random random = new Random();
-    private ArrayList<String> usedWords = new ArrayList<>(6);
-    private ArrayList<String> usedTranscriptsUsedWords = new ArrayList<>(6);
+    private ArrayList<String> usedWords = new ArrayList<>(countSteps);
+    private ArrayList<String> usedTranscriptsUsedWords = new ArrayList<>(countSteps);
 
-    public WordleGame(int steps, WordleDictionary dictionary, GameStatus gameStatus, LogWriter logWriter) throws GameException {
-        this.steps = steps;
+    public WordleGame(int countSteps, int lengthWord, WordleDictionary dictionary, GameStatus gameStatus, LogWriter logWriter) throws GameException {
+        this.countSteps = countSteps;
+        this.lengthWord = lengthWord;
         this.dictionary = dictionary;
         this.logWriter = logWriter;
+        this.gameState = new GameState(logWriter);
         this.gameStatus = gameStatus;
         try {
             answer = generateWord();
@@ -48,9 +51,9 @@ public class WordleGame {
         usedTranscriptsUsedWords.add(transcriptsWord);
 
         // Обновляем состояние игры
-        gameState.updateFromTranscript(input, transcriptsWord);
+        gameState.updateFromTranscript(input, transcriptsWord, lengthWord);
 
-        steps--;
+        countSteps--;
         readinessCheck(input);
         return transcriptsWord;
     }
@@ -80,8 +83,8 @@ public class WordleGame {
     private List<String> filterWordsByGameState(List<String> words) {
         List<String> result = new ArrayList<>();
 
-        for (String word : words) {
-            if (word == null || word.length() != 5 || usedWords.contains(word)) {
+        for (String word : words) { // быстрая логическая проверка на месте вместо try-catch
+            if (word == null || word.length() != lengthWord || usedWords.contains(word)) {
                 continue;
             }
 
@@ -154,7 +157,7 @@ public class WordleGame {
     void readinessCheck(String input) {
         if (input.equals(answer)) {
             gameStatus = GameStatus.SUCCESS;
-        } else if (steps == 0) {
+        } else if (countSteps == 0) {
             gameStatus = GameStatus.LOSS;
         }
     }
