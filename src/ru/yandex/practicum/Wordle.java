@@ -25,7 +25,7 @@ public class Wordle {
             WordleDictionary wordsDictionary = new WordleDictionary(wdLoader.readWordsFromFile(), logWriter);
             wordsDictionary = wordsDictionary.normalizeWordleDictionary(wordsDictionary.getWords());
             //System.out.println(wordsDictionary.getWords()); // окей, слова, очищенные по правилам получили
-            WordleGame wordleGame = new WordleGame(3, wordsDictionary, GameStatus.READY, logWriter);
+            WordleGame wordleGame = new WordleGame(6, wordsDictionary, GameStatus.READY, logWriter);
             System.out.println("Игра началась. Слово загадано. Отгадывайте.");
 
             Scanner scanner = new Scanner(System.in);
@@ -36,9 +36,11 @@ public class Wordle {
             if (wordleGame.getGameStatus() != GameStatus.READY) { // Конец игры
                 switch (wordleGame.getGameStatus()) {
                     case GameStatus.SUCCESS -> System.out.println("Да, правильный ответ: " + wordleGame.getAnswer());
-                    //case GameStatus.LOSS -> System.out.println("Ответ угадать не получилось. Правильное слово: " + wordleGame.getAnswer());
-                    case GameStatus.LOSS -> System.out.println("Ответ угадать не получилось. Правильное слово: " + wordleGame.getUsedWords()
-                    + wordleGame.getUsedTranscriptsUsedWords());
+                    /*
+                    case GameStatus.SUCCESS -> System.out.println("Да, правильный ответ: " + wordleGame.getAnswer() + wordleGame.getUsedWords()
+                            + wordleGame.getUsedTranscriptsUsedWords());
+                     */
+                    case GameStatus.LOSS -> System.out.println("Ответ угадать не получилось. Правильное слово: " + wordleGame.getAnswer());
                 }
             }
         }
@@ -68,13 +70,11 @@ public class Wordle {
                 throw new EnteredWordIsNotInListAvailableWords("Введенного слова нет в списке слов доступных к вводу.");
             }
 
-            String step = wordleGame.takeStepGame(input);
-            if (step.contains(" ")) {
-                String[] parts = step.split(" ", 2);
-                System.out.printf("%s%n%s%n", parts[0], parts[1]);
-            } else {
-                System.out.printf("%s%n", step);
+            String step = wordleGame.takeStepGame(input); // Выводим в консоль шифры
+            if (wordleGame.isUsedHint()) {
+                System.out.printf("%s%n", wordleGame.getUsedWords().getLast());
             }
+            System.out.printf("%s%n", step);
 
 
         } catch (NoSuchElementException | IllegalStateException e) {
