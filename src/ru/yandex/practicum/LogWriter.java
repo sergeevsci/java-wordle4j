@@ -13,29 +13,42 @@ public class LogWriter {
 
     private final String filename;
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private PrintWriter printWriter;
 
     public LogWriter(String filename) {
         this.filename = filename;
     }
 
-    public void log(String message, Exception exception) {
-        try (FileWriter fileWriter = new FileWriter(filename, true);
-             PrintWriter printWriter = new PrintWriter(fileWriter)) {
+    public LogWriter(PrintWriter printWriter) {
+        this.filename = null;
+        this.printWriter = printWriter;
+    }
 
-            // Записываем временную метку и сообщение
+    public void log(String message, Exception exception) {
+        if (printWriter != null) {
             printWriter.println(dateFormat.format(new Date()));
             printWriter.println("Сообщение: " + message);
-
-            // Записываем тип и сообщение исключения
             printWriter.println("Исключение: " + exception.getClass().getSimpleName() +
                     " - " + exception.getMessage());
-
-            // Полная трассировка стека
-            printWriter.println("Трассировка стека:");
             exception.printStackTrace(printWriter);
             printWriter.println("--- Конец записи ---");
-            printWriter.println(); // пустая строка для разделения записей
+            printWriter.println();
+            return;
+        }
 
+        try (FileWriter fileWriter = new FileWriter(filename, true);
+             PrintWriter pw = new PrintWriter(fileWriter)) {
+
+            pw.println(dateFormat.format(new Date()));
+            pw.println("Сообщение: " + message);
+
+            pw.println("Исключение: " + exception.getClass().getSimpleName() +
+                    " - " + exception.getMessage());
+
+            pw.println("Трассировка стека:");
+            exception.printStackTrace(pw);
+            pw.println("--- Конец записи ---");
+            pw.println();
         } catch (IOException ioe) {
             System.err.println("КРИТИЧЕСКАЯ ОШИБКА: не удалось записать в лог-файл: " + ioe.getMessage());
             System.err.println("Исходная ошибка: " + message);
