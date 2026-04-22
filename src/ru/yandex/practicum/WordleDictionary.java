@@ -14,16 +14,22 @@ public class WordleDictionary {
     private List<String> words;
     LogWriter logWriter;
 
+
     public WordleDictionary(List<String> words, LogWriter logWriter) {
+
         this.words = words;
         this.logWriter = logWriter;
     }
 
+
     public List<String> getWords() {
+
         return words;
     }
 
-    WordleDictionary normalizeWordleDictionary(List<String> rwFromFile) { // Здесь оставляем только подходящие слова.
+
+    WordleDictionary normalizeWordleDictionary(List<String> rwFromFile) {
+
         List<String> normalizeWords = new ArrayList<>();
         for (String str : rwFromFile) {
             if (str.length() == 5) {
@@ -35,7 +41,7 @@ public class WordleDictionary {
                 }
             }
         }
+
         return new WordleDictionary(normalizeWords, this.logWriter);
     }
-
 }

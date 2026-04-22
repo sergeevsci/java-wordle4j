@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Random;
 
 public class WordleGame {
+
     private String answer;
     private int countSteps;
     private int lengthWord;
@@ -19,23 +20,29 @@ public class WordleGame {
     private ArrayList<String> usedWords = new ArrayList<>(countSteps);
     private ArrayList<String> usedTranscriptsUsedWords = new ArrayList<>(countSteps);
 
-    public WordleGame(int countSteps, int lengthWord, WordleDictionary dictionary, GameStatus gameStatus, LogWriter logWriter) throws GameException {
+    public WordleGame(int countSteps, int lengthWord, WordleDictionary dictionary,
+                    GameStatus gameStatus, LogWriter logWriter) throws GameException {
+
         this.countSteps = countSteps;
         this.lengthWord = lengthWord;
         this.dictionary = dictionary;
         this.logWriter = logWriter;
         this.gameState = new GameState(logWriter);
         this.gameStatus = gameStatus;
+
         try {
             answer = generateWord();
         } catch (EmptyDictionaryWordleException e) {
             logWriter.log(e.getMessage(), e);
             gameStatus = GameStatus.EMPTY_DICTIONARY;
         }
+
         this.charArrayAnswer = answer.toCharArray();
     }
 
+
     String takeStepGame(String input) {
+
         isUsedHint = false;
         if (input.trim().isEmpty()) {
             isUsedHint = true;
@@ -47,10 +54,10 @@ public class WordleGame {
 
         usedWords.add(input);
         StringBuilder sbForTranscriptsWord = new StringBuilder();
-        String transcriptsWord = checkingForPresenceOfLetter(charArrayInput, charArrayAnswer, sbForTranscriptsWord);
+        String transcriptsWord = checkingForPresenceOfLetter(charArrayInput, charArrayAnswer,
+                                                        sbForTranscriptsWord);
         usedTranscriptsUsedWords.add(transcriptsWord);
 
-        // Обновляем состояние игры
         gameState.updateFromTranscript(input, transcriptsWord, lengthWord);
 
         countSteps--;
@@ -58,7 +65,9 @@ public class WordleGame {
         return transcriptsWord;
     }
 
+
     String giveHint() {
+
         if (usedWords.isEmpty()) {
             try {
                 return generateWord();
@@ -79,11 +88,13 @@ public class WordleGame {
         return suitableWords.get(randomIndex);
     }
 
-    // стратегия Весов заменена на стратегию явного Исключения невстречающихся букв и удержания точных совпадений
+
+    // стратегия Весов заменена на стратегию явного Искстречающихся букв и удержания точных совпадений
     private List<String> filterWordsByGameState(List<String> words) {
+
         List<String> result = new ArrayList<>();
 
-        for (String word : words) { // быстрая логическая проверка на месте вместо try-catch
+        for (String word : words) {
             if (word == null || word.length() != lengthWord || usedWords.contains(word)) {
                 continue;
             }
@@ -118,10 +129,14 @@ public class WordleGame {
                 result.add(word);
             }
         }
+
         return result;
     }
 
-    String checkingForPresenceOfLetter(char[] charArrayInput, char[] charArrayAnswer, StringBuilder stringBuilder) {
+
+    String checkingForPresenceOfLetter(char[] charArrayInput, char[] charArrayAnswer,
+                                  StringBuilder stringBuilder) {
+
         int index = 0;
         for (char letter : charArrayInput) {
             if (containsChar(charArrayAnswer, letter)) {
@@ -135,26 +150,35 @@ public class WordleGame {
             }
             index++;
         }
+
         return stringBuilder.toString();
     }
 
+
     String generateWord() throws EmptyDictionaryWordleException {
+
         if (dictionary.getWords().isEmpty()) {
             throw new EmptyDictionaryWordleException("Словарь для игры в Wordle оказался пуст.");
         }
+
         return dictionary.getWords().get(random.nextInt(dictionary.getWords().size()));
     }
 
+
     static boolean containsChar(char[] array, char target) {
+
         for (char c : array) {
             if (c == target) {
                 return true;
             }
         }
+
         return false;
     }
 
+
     void readinessCheck(String input) {
+
         if (input.equals(answer)) {
             gameStatus = GameStatus.SUCCESS;
         } else if (countSteps == 0) {
@@ -162,31 +186,45 @@ public class WordleGame {
         }
     }
 
+
     ArrayList<String> getUsedWords() {
+
         return usedWords;
     }
 
+
     ArrayList<String> getUsedTranscriptsUsedWords() {
+
         return usedTranscriptsUsedWords;
     }
 
+
     String getAnswer() {
+
         return answer;
     }
 
+
     boolean isUsedHint() {
+
         return isUsedHint;
     }
 
+
     GameStatus getGameStatus() {
+
         return gameStatus;
     }
 
+
     void setGameStatus(GameStatus gameStatus) {
+
         this.gameStatus = gameStatus;
     }
 
+
     WordleDictionary getDictionary() {
+
         return dictionary;
     }
 }

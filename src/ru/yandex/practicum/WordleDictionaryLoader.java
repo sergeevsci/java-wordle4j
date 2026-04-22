@@ -19,12 +19,16 @@ public class WordleDictionaryLoader {
     private final String filename;
     LogWriter logWriter;
 
+
     public WordleDictionaryLoader(String filename, LogWriter logWriter) {
+
         this.filename = filename;
         this.logWriter = logWriter;
     }
 
+
     List<String> readWordsFromFile() {
+
         List<String> str = new ArrayList<>();
         try (BufferedReader reader = new BufferedReader(
                 new InputStreamReader(
@@ -35,8 +39,9 @@ public class WordleDictionaryLoader {
                 str.add(line);
             }
         } catch (IOException e) {
-            logWriter.log("Неожиданная ошибка: ", e); // все остальные в файл
+            logWriter.log("Неожиданная ошибка: ", e);
         }
+
         return str;
     }
 }
