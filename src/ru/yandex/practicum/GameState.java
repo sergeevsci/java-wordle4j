@@ -28,9 +28,11 @@ class GameState {
     public Set<Character> getExcludedLetters() {
         return excludedLetters;
     }
+
     public Map<Integer, Character> getConfirmedPositions() {
         return confirmedPositions;
     }
+
     public Set<Character> getPresentLetters() {
         return presentLetters;
     }
