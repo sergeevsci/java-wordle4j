@@ -18,8 +18,8 @@ public class Wordle {
     private static final String filenameWordsRu = "words_ru.txt";
     private static final String filenameLog = "log.txt";
 
-    private static final int countSteps = 6;
-    private static final int lengthWord = 5;
+    private static final int COUNT_STEPS = 6;
+    private static final int LENGTH_WORD = 5;
 
 
     public static void main(String[] args) {
@@ -32,7 +32,7 @@ public class Wordle {
             WordleDictionary wordsDictionary = new WordleDictionary(wdLoader.readWordsFromFile(), logWriter);
             wordsDictionary = wordsDictionary.normalizeWordleDictionary(wordsDictionary.getWords());
 
-            WordleGame wordleGame = new WordleGame(countSteps, lengthWord, wordsDictionary,
+            WordleGame wordleGame = new WordleGame(COUNT_STEPS, LENGTH_WORD, wordsDictionary,
                                             GameStatus.READY, logWriter);
             System.out.println("Игра началась. Слово загадано. Отгадывайте.");
 
@@ -62,9 +62,9 @@ public class Wordle {
         String input;
         try {
             input = scanner.nextLine();
-            if ((input.length() != lengthWord) && (!input.trim().isEmpty())) {
+            if ((input.length() != LENGTH_WORD) && (!input.isBlank())) {
                 throw new WordIsNot5CharactersLong("Вы ввели слово состоящее не из "
-                        + lengthWord + " символов.");
+                        + LENGTH_WORD + " символов.");
             }
 
             if (input.equals(wordleGame.getAnswer())) {

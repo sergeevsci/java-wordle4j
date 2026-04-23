@@ -41,7 +41,7 @@ public class WordleGame {
     }
 
 
-    String takeStepGame(String input) {
+    public String takeStepGame(String input) {
 
         isUsedHint = false;
         if (input.trim().isEmpty()) {
@@ -66,7 +66,7 @@ public class WordleGame {
     }
 
 
-    String giveHint() {
+    public String giveHint() {
 
         if (usedWords.isEmpty()) {
             try {

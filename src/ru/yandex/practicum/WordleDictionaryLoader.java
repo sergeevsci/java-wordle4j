@@ -27,7 +27,7 @@ public class WordleDictionaryLoader {
     }
 
 
-    List<String> readWordsFromFile() {
+    public List<String> readWordsFromFile() {
 
         List<String> str = new ArrayList<>();
         try (BufferedReader reader = new BufferedReader(
