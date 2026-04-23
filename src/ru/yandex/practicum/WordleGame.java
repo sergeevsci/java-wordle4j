@@ -1,9 +1,8 @@
 package ru.yandex.practicum;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class WordleGame {
 
@@ -17,8 +16,18 @@ public class WordleGame {
     private final GameState gameState;
     private char[] charArrayAnswer;
     private Random random = new Random();
-    private ArrayList<String> usedWords = new ArrayList<>(countSteps);
-    private ArrayList<String> usedTranscriptsUsedWords = new ArrayList<>(countSteps);
+    private ArrayList<String> usedWords = new ArrayList<>(countSteps); // usedWords используется в важных местах
+    /*
+     1. add word to usedWords
+     2. для проверки первой подсказки: Если слов не было - подсказка юзается первый раз, следовательно, не должна быть ответом
+     3. для вычеркивания из списка возможных подсказок: Если слово уже было (введено или сгенерировано) - его не добавляем
+                в список возможных слов для генерации подсказки
+     4. getter...
+     5. этот геттер из 4. используется для вывода в консоль сгенерированной подсказки
+
+     Мб я не прав и можно сделать все проще?
+     */
+    // а вот шифры usedWords действительно не используются нигде - их убрал
 
     public WordleGame(int countSteps, int lengthWord, WordleDictionary dictionary,
                     GameStatus gameStatus, LogWriter logWriter) throws GameException {
@@ -44,19 +53,24 @@ public class WordleGame {
     public String takeStepGame(String input) {
 
         isUsedHint = false;
-        if (input.trim().isEmpty()) {
+        if (input.isBlank()) {
             isUsedHint = true;
             input = giveHint();
         }
 
-        input = input.trim().toLowerCase().replace('ё', 'е');
+        //input = input.trim().toLowerCase().replace('ё', 'е'); // Что в hint, что в userInput -
+        // уже 100% приходит все обработанное
         char[] charArrayInput = input.toCharArray();
 
-        usedWords.add(input);
+        usedWords.add(input); // Добавляю введенное или сгенерированное подсказкой слово
         StringBuilder sbForTranscriptsWord = new StringBuilder();
         String transcriptsWord = checkingForPresenceOfLetter(charArrayInput, charArrayAnswer,
                                                         sbForTranscriptsWord);
-        usedTranscriptsUsedWords.add(transcriptsWord);
+
+        if (transcriptsWord.equals("+++++")) {
+            gameStatus = GameStatus.SUCCESS;
+            return transcriptsWord;
+        }
 
         gameState.updateFromTranscript(input, transcriptsWord, lengthWord);
 
@@ -68,9 +82,9 @@ public class WordleGame {
 
     public String giveHint() {
 
-        if (usedWords.isEmpty()) {
+        if (usedWords.isEmpty()) { // Если слов не было - подсказка юзается первый раз, следовательно, не должна быть ответом
             try {
-                return generateWord();
+                return generateWord(candidate -> !candidate.equals(answer));
             } catch (EmptyDictionaryWordleException e) {
                 logWriter.log(e.getMessage(), e);
                 gameStatus = GameStatus.EMPTY_DICTIONARY;
@@ -80,8 +94,16 @@ public class WordleGame {
 
         List<String> suitableWords = filterWordsByGameState(dictionary.getWords());
 
-        if (suitableWords.isEmpty()) {
-            return null;
+        if (suitableWords.isEmpty()) { // Стал слишком лютый фильтр - часто возвращает пустой словарь
+            // если словарь подсказок пустой - выведем любое слово
+            try {
+                return generateWord();
+            } catch (EmptyDictionaryWordleException e) {
+                logWriter.log(e.getMessage(), e);
+                gameStatus = GameStatus.EMPTY_DICTIONARY;
+                return null;
+            }
+
         }
 
         int randomIndex = random.nextInt(suitableWords.size());
@@ -89,10 +111,13 @@ public class WordleGame {
     }
 
 
-    // стратегия Весов заменена на стратегию явного Искстречающихся букв и удержания точных совпадений
     private List<String> filterWordsByGameState(List<String> words) {
 
         List<String> result = new ArrayList<>();
+
+        Set<Character> excluded = gameState.getExcludedLetters();
+        Map<Integer, Character> confirmed = gameState.getConfirmedPositions();
+        Set<Character> present = gameState.getPresentLetters();
 
         for (String word : words) {
             if (word == null || word.length() != lengthWord || usedWords.contains(word)) {
@@ -101,24 +126,23 @@ public class WordleGame {
 
             boolean accept = true;
 
-            // убираем исключенные буквы
-            for (char letter : gameState.getExcludedLetters()) {
+            for (char letter : excluded) {
                 if (word.indexOf(letter) != -1) {
                     accept = false;
                     break;
                 }
             }
+            if (!accept) continue;
 
-            // + должны быть там где и в ответе
-            for (Map.Entry<Integer, Character> entry : gameState.getConfirmedPositions().entrySet()) {
+            for (Map.Entry<Integer, Character> entry : confirmed.entrySet()) {
                 if (word.charAt(entry.getKey()) != entry.getValue()) {
                     accept = false;
                     break;
                 }
             }
+            if (!accept) continue;
 
-            // ^ тоже должны быть в слове для подсказки
-            for (char letter : gameState.getPresentLetters()) {
+            for (char letter : present) {
                 if (word.indexOf(letter) == -1) {
                     accept = false;
                     break;
@@ -134,28 +158,37 @@ public class WordleGame {
     }
 
 
-    String checkingForPresenceOfLetter(char[] charArrayInput, char[] charArrayAnswer,
-                                  StringBuilder stringBuilder) {
+    String checkingForPresenceOfLetter(char[] charArrayInput, char[] charArrayAnswer, StringBuilder stringBuilder) {
+
+        Map<Character, Integer> availableLetters = new HashMap<>();
+        for (char c : charArrayAnswer) {
+            availableLetters.put(c, availableLetters.getOrDefault(c, 0) + 1);
+        }
 
         int index = 0;
         for (char letter : charArrayInput) {
-            if (containsChar(charArrayAnswer, letter)) {
-                if (charArrayAnswer[index] == charArrayInput[index]) {
+            if (availableLetters.containsKey(letter) && availableLetters.get(letter) > 0) {
+                if (charArrayAnswer[index] == letter) {
+                    // Точное совпадение на позиции
                     stringBuilder.append('+');
+                    availableLetters.put(letter, availableLetters.get(letter) - 1);
                 } else {
+                    // Буква есть, но не на этой позиции
                     stringBuilder.append('^');
+                    availableLetters.put(letter, availableLetters.get(letter) - 1);
                 }
             } else {
+                // Буквы нет в ответе или все вхождения уже использованы
                 stringBuilder.append('-');
             }
             index++;
         }
-
         return stringBuilder.toString();
+
     }
 
 
-    String generateWord() throws EmptyDictionaryWordleException {
+    public String generateWord() throws EmptyDictionaryWordleException {
 
         if (dictionary.getWords().isEmpty()) {
             throw new EmptyDictionaryWordleException("Словарь для игры в Wordle оказался пуст.");
@@ -164,8 +197,24 @@ public class WordleGame {
         return dictionary.getWords().get(random.nextInt(dictionary.getWords().size()));
     }
 
+    public String generateWord(Predicate<String> validator) throws EmptyDictionaryWordleException {
+        if (dictionary.getWords().isEmpty()) {
+            throw new EmptyDictionaryWordleException("Словарь для игры в Wordle оказался пуст.");
+        }
 
-    static boolean containsChar(char[] array, char target) {
+        List<String> validWords = dictionary.getWords().stream()
+                .filter(validator)
+                .collect(Collectors.toList());
+
+        if (validWords.isEmpty()) {
+            throw new EmptyDictionaryWordleException("Нет слов, удовлетворяющих условию валидатора (candidate != answer).");
+        }
+
+        return validWords.get(random.nextInt(validWords.size()));
+    }
+
+
+    public static boolean containsChar(char[] array, char target) {
 
         for (char c : array) {
             if (c == target) {
@@ -177,7 +226,18 @@ public class WordleGame {
     }
 
 
-    void readinessCheck(String input) {
+    public static int countCharInWord(char[] array, char target) {
+        int count = 0;
+        for (char c : array) {
+            if (c == target) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+
+    public void readinessCheck(String input) {
 
         if (input.equals(answer)) {
             gameStatus = GameStatus.SUCCESS;
@@ -187,43 +247,37 @@ public class WordleGame {
     }
 
 
-    ArrayList<String> getUsedWords() {
+    public ArrayList<String> getUsedWords() {
 
         return usedWords;
     }
 
 
-    ArrayList<String> getUsedTranscriptsUsedWords() {
-
-        return usedTranscriptsUsedWords;
-    }
-
-
-    String getAnswer() {
+    public String getAnswer() {
 
         return answer;
     }
 
 
-    boolean isUsedHint() {
+    public boolean isUsedHint() {
 
         return isUsedHint;
     }
 
 
-    GameStatus getGameStatus() {
+    public GameStatus getGameStatus() {
 
         return gameStatus;
     }
 
 
-    void setGameStatus(GameStatus gameStatus) {
+    public void setGameStatus(GameStatus gameStatus) {
 
         this.gameStatus = gameStatus;
     }
 
 
-    WordleDictionary getDictionary() {
+    public WordleDictionary getDictionary() {
 
         return dictionary;
     }

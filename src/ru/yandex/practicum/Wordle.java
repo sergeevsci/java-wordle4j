@@ -1,17 +1,6 @@
 package ru.yandex.practicum;
-// Добрый день, Сергей! Отправляю на проверку работу)
 
 import java.util.*;
-
-/*
-в главном классе нам нужно:
-    + создать лог-файл (он должен передаваться во все классы)
-    + создать загрузчик словарей WordleDictionaryLoader
-    + загрузить словарь WordleDictionary с помощью класса WordleDictionaryLoader
-    + затем создать игру WordleGame и передать ей словарь
-    + вызвать игровой метод в котором в цикле опрашивать пользователя и передавать информацию в игру
-    + вывести состояние игры и конечный результат
- */
 
 public class Wordle {
 
@@ -62,6 +51,8 @@ public class Wordle {
         String input;
         try {
             input = scanner.nextLine();
+            input = input.trim().toLowerCase().replace('ё', 'е'); // Сначала нормализировали, потом валидация
+
             if ((input.length() != LENGTH_WORD) && (!input.isBlank())) {
                 throw new WordIsNot5CharactersLong("Вы ввели слово состоящее не из "
                         + LENGTH_WORD + " символов.");
@@ -72,15 +63,16 @@ public class Wordle {
                 return;
             }
 
-            if ((!wordleGame.getDictionary().getWords().contains(input.trim().toLowerCase()))
-                    && (!input.trim().isEmpty())) {
+            if ((!wordleGame.getDictionary().getWords().contains(input))
+                    && (!input.isBlank())) {
                 throw new EnteredWordIsNotInListAvailableWords(
                         "Введенного слова нет в списке слов доступных к вводу.");
             }
 
             String step = wordleGame.takeStepGame(input);
             if (wordleGame.isUsedHint()) {
-                System.out.printf("%s%n", wordleGame.getUsedWords().getLast());
+                System.out.printf("%s%n", wordleGame.getUsedWords().getLast()); // И здесь тоже нужен getUsedWords
+                // так как само слово подсказки нужно вывести для пользователя
             }
             System.out.printf("%s%n", step);
 

@@ -1,9 +1,6 @@
 package ru.yandex.practicum;
 
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
-import java.io.IOException;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +26,10 @@ public class WordleDictionaryLoader {
 
     public List<String> readWordsFromFile() {
 
+        if (this.filename == null || this.filename.trim().isEmpty()) {
+            throw new TheDictionaryWasNotLoaded("Имя файла словаря не указано. Игра остановлена.");
+        }
+
         List<String> str = new ArrayList<>();
         try (BufferedReader reader = new BufferedReader(
                 new InputStreamReader(
@@ -38,8 +39,17 @@ public class WordleDictionaryLoader {
             while ((line = reader.readLine()) != null) {
                 str.add(line);
             }
+        } catch (FileNotFoundException e) {
+            logWriter.log("Файл не найден: " + this.filename, e);
+            throw new TheDictionaryWasNotLoaded("Файл словаря '" + this.filename + "' не найден. Игра остановлена.");
+
+        } catch (SecurityException e) {
+            logWriter.log("Нет доступа к файлу: " + this.filename, e);
+            throw new TheDictionaryWasNotLoaded("Нет прав доступа к файлу словаря. Игра остановлена.");
+
         } catch (IOException e) {
-            logWriter.log("Неожиданная ошибка: ", e);
+            logWriter.log("Ошибка чтения файла '" + this.filename + "': " + e.getMessage(), e);
+            throw new TheDictionaryWasNotLoaded("Ошибка чтения словаря. Игра остановлена.");
         }
 
         return str;
