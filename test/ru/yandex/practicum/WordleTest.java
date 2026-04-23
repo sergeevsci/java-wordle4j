@@ -395,9 +395,37 @@ class WordleTest {
 
         GameState state = new GameState(logWriter);
 
-        state.updateFromTranscript("ааааа", "^----", 5);
+        state.updateFromTranscript("аабба", "+^-+-", 5);
 
-        assertTrue(state.getMaxLetterOccurrences().containsKey('а'));
+        assertEquals(Integer.valueOf(2), state.getMinLetterOccurrences().get('а'));
+        assertEquals(Integer.valueOf(2), state.getMaxLetterOccurrences().get('а'));
+    }
+
+
+    @Test
+    @DisplayName("Тест: GameState - запрещенные позиции для букв из ^")
+    void testGameStateForbiddenPositions() {
+
+        GameState state = new GameState(logWriter);
+
+        state.updateFromTranscript("краны", "-^---", 5);
+
+        assertTrue(state.getPresentLetters().contains('р'));
+        assertTrue(state.getForbiddenPositions().containsKey('р'));
+        assertTrue(state.getForbiddenPositions().get('р').contains(1));
+    }
+
+
+    @Test
+    @DisplayName("Тест: GameState - минус без совпадений исключает букву")
+    void testGameStateMinusWithoutPositivesExcludesLetter() {
+
+        GameState state = new GameState(logWriter);
+
+        state.updateFromTranscript("бонус", "-----", 5);
+
+        assertTrue(state.getExcludedLetters().contains('б'));
+        assertEquals(Integer.valueOf(0), state.getMaxLetterOccurrences().get('б'));
     }
 
 

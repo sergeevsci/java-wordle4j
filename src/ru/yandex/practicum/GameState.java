@@ -7,7 +7,9 @@ class GameState {
     private final Set<Character> excludedLetters = new HashSet<>();
     private final Map<Integer, Character> confirmedPositions = new HashMap<>();
     private final Set<Character> presentLetters = new HashSet<>();
+    private final Map<Character, Integer> minLetterOccurrences = new HashMap<>();
     private final Map<Character, Integer> maxLetterOccurrences = new HashMap<>();
+    private final Map<Character, Set<Integer>> forbiddenPositions = new HashMap<>();
     private final LogWriter logWriter;
 
 
@@ -18,51 +20,69 @@ class GameState {
 
 
     public void updateFromTranscript(String word, String transcript, int lengthWord) {
+        Map<Character, Integer> positiveInGuess = new HashMap<>();
+        Set<Character> minusInGuess = new HashSet<>();
+
         for (int i = 0; i < lengthWord; i++) {
             char symbol = transcript.charAt(i);
             char letter = word.charAt(i);
 
             switch (symbol) {
-                case '-' -> excludedLetters.add(letter);
+                case '-' -> minusInGuess.add(letter);
                 case '+' -> {
                     confirmedPositions.put(i, letter);
-                    // Фиксируем максимальное количество вхождений
-                    maxLetterOccurrences.put(
-                            letter,
-                            Math.max(
-                                    maxLetterOccurrences.getOrDefault(letter, 0),
-                                    countOccurrencesInWord(word, letter, i + 1)
-                            )
-                    );
+                    presentLetters.add(letter);
+                    positiveInGuess.put(letter, positiveInGuess.getOrDefault(letter, 0) + 1);
                 }
                 case '^' -> {
                     presentLetters.add(letter);
-                    // Аналогично для ^
-                    maxLetterOccurrences.put(
-                            letter,
-                            Math.max(
-                                    maxLetterOccurrences.getOrDefault(letter, 0),
-                                    countOccurrencesInWord(word, letter, i + 1)
-                            )
-                    );
+                    forbiddenPositions
+                            .computeIfAbsent(letter, key -> new HashSet<>())
+                            .add(i);
+                    positiveInGuess.put(letter, positiveInGuess.getOrDefault(letter, 0) + 1);
                 }
+                default -> {
+                }
+            }
+        }
+
+        for (Map.Entry<Character, Integer> entry : positiveInGuess.entrySet()) {
+            char letter = entry.getKey();
+            int positives = entry.getValue();
+            int currentMin = minLetterOccurrences.getOrDefault(letter, 0);
+            minLetterOccurrences.put(letter, Math.max(currentMin, positives));
+            excludedLetters.remove(letter);
+        }
+
+        for (char letter : minusInGuess) {
+            int positives = positiveInGuess.getOrDefault(letter, 0);
+
+            if (positives == 0) {
+                if (!presentLetters.contains(letter)
+                        && !confirmedPositions.containsValue(letter)
+                        && minLetterOccurrences.getOrDefault(letter, 0) == 0) {
+                    excludedLetters.add(letter);
+                    maxLetterOccurrences.put(letter, 0);
+                }
+            } else {
+                int minAllowed = minLetterOccurrences.getOrDefault(letter, positives);
+                int maxAllowed = Math.max(minAllowed, positives);
+                int currentMax = maxLetterOccurrences.getOrDefault(letter, Integer.MAX_VALUE);
+                maxLetterOccurrences.put(letter, Math.min(currentMax, maxAllowed));
             }
         }
     }
 
-
-    private int countOccurrencesInWord(String word, char target, int maxPosition) {
-        int count = 0;
-        for (int i = 0; i < Math.min(maxPosition, word.length()); i++) {
-            if (word.charAt(i) == target) {
-                count++;
-            }
-        }
-        return count;
+    public Map<Character, Integer> getMinLetterOccurrences() {
+        return minLetterOccurrences;
     }
 
     public Map<Character, Integer> getMaxLetterOccurrences() {
         return maxLetterOccurrences;
+    }
+
+    public Map<Character, Set<Integer>> getForbiddenPositions() {
+        return forbiddenPositions;
     }
 
 

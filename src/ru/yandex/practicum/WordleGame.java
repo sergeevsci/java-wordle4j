@@ -53,26 +53,29 @@ public class WordleGame {
     public String takeStepGame(String input) {
 
         isUsedHint = false;
+
         if (input.isBlank()) {
             isUsedHint = true;
             input = giveHint();
+            if (input == null) {
+                return null; // вот тут null не нужен. лучше throw new
+            }
         }
 
-        //input = input.trim().toLowerCase().replace('ё', 'е'); // Что в hint, что в userInput -
-        // уже 100% приходит все обработанное
         char[] charArrayInput = input.toCharArray();
 
-        usedWords.add(input); // Добавляю введенное или сгенерированное подсказкой слово
+        usedWords.add(input);
         StringBuilder sbForTranscriptsWord = new StringBuilder();
         String transcriptsWord = checkingForPresenceOfLetter(charArrayInput, charArrayAnswer,
                                                         sbForTranscriptsWord);
+
+        // Обновляем gameState для следующей подсказки
+        gameState.updateFromTranscript(input, transcriptsWord, lengthWord);
 
         if (transcriptsWord.equals("+++++")) {
             gameStatus = GameStatus.SUCCESS;
             return transcriptsWord;
         }
-
-        gameState.updateFromTranscript(input, transcriptsWord, lengthWord);
 
         countSteps--;
         readinessCheck(input);
@@ -94,8 +97,8 @@ public class WordleGame {
 
         List<String> suitableWords = filterWordsByGameState(dictionary.getWords());
 
-        if (suitableWords.isEmpty()) { // Стал слишком лютый фильтр - часто возвращает пустой словарь
-            // если словарь подсказок пустой - выведем любое слово
+        if (suitableWords.isEmpty()) {
+            // если словарь подсказок пустой - выведем любое слово - но это крайние меры
             try {
                 return generateWord();
             } catch (EmptyDictionaryWordleException e) {
